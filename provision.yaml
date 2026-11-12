@@ -2,7 +2,7 @@
 default:
   provisioner: docker
   images:
-  - litmusimage/debian:9
+  - litmusimage/debian:13
 vagrant:
   provisioner: vagrant
   images:
