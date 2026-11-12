@@ -24,72 +24,86 @@ describe 'apt_key without apt-key' do
     end
   end
 
-  it 'fails apt_key with directions to use apt::keyring' do
-    pp = <<-MANIFEST
-      apt_key { 'puppetlabs':
-        ensure => present,
-        id     => '#{MISSING_KEY_FINGERPRINT}',
-        source => '#{MISSING_KEY_URL}',
-      }
-    MANIFEST
-    apply_manifest(pp, expect_failures: true) do |r|
-      expect(r.stderr).to match(MISSING_KEY_ERROR)
-      expect(r.stderr).not_to match(%r{Could not find a suitable provider})
+  describe 'apt_key' do
+    let(:pp) do
+      <<-MANIFEST
+        apt_key { 'puppetlabs':
+          ensure => present,
+          id     => '#{MISSING_KEY_FINGERPRINT}',
+          source => '#{MISSING_KEY_URL}',
+        }
+      MANIFEST
+    end
+
+    it 'fails with directions to use apt::keyring' do
+      apply_manifest(pp, expect_failures: true) do |r|
+        expect(r.stderr).to match(MISSING_KEY_ERROR).and(satisfy { |err| !err.include?('Could not find a suitable provider') })
+      end
     end
   end
 
-  it 'fails apt::key with directions to use apt::keyring' do
-    pp = <<-MANIFEST
-      class { 'apt': }
-      apt::key { 'puppetlabs':
-        id     => '#{MISSING_KEY_FINGERPRINT}',
-        source => '#{MISSING_KEY_URL}',
-      }
-    MANIFEST
-    apply_manifest(pp, expect_failures: true) do |r|
-      expect(r.stderr).to match(MISSING_KEY_ERROR)
+  describe 'apt::key' do
+    let(:pp) do
+      <<-MANIFEST
+        class { 'apt': }
+        apt::key { 'puppetlabs':
+          id     => '#{MISSING_KEY_FINGERPRINT}',
+          source => '#{MISSING_KEY_URL}',
+        }
+      MANIFEST
+    end
+
+    it 'fails with directions to use apt::keyring' do
+      apply_manifest(pp, expect_failures: true) do |r|
+        expect(r.stderr).to match(MISSING_KEY_ERROR)
+      end
     end
   end
 
-  it 'fails apt::source with a key id with directions to use apt::keyring' do
-    pp = <<-MANIFEST
-      class { 'apt': }
-      apt::source { 'missing_key_test':
-        location      => 'http://apt.puppetlabs.com',
-        release       => 'stable',
-        repos         => 'main',
-        notify_update => false,
-        key           => {
-          'id'     => '#{MISSING_KEY_FINGERPRINT}',
-          'source' => '#{MISSING_KEY_URL}',
-        },
-      }
-    MANIFEST
-    apply_manifest(pp, expect_failures: true) do |r|
-      expect(r.stderr).to match(MISSING_KEY_ERROR)
+  describe 'apt::source' do
+    let(:pp) do
+      <<-MANIFEST
+        class { 'apt': }
+        apt::source { 'missing_key_test':
+          location      => 'http://apt.puppetlabs.com',
+          release       => 'stable',
+          repos         => 'main',
+          notify_update => false,
+          key           => {
+            '#{key_param}' => '#{key_value}',
+            'source' => '#{MISSING_KEY_URL}',
+          },
+        }
+      MANIFEST
     end
-  end
 
-  it 'works with apt::source and a keyring key name' do
-    pp = <<-MANIFEST
-      class { 'apt': }
-      apt::source { 'missing_key_test':
-        location      => 'http://apt.puppetlabs.com',
-        release       => 'stable',
-        repos         => 'main',
-        notify_update => false,
-        key           => {
-          'name'   => 'missing_key_test.gpg',
-          'source' => '#{MISSING_KEY_URL}',
-        },
-      }
-    MANIFEST
-    retry_on_error_matching do
-      apply_manifest(pp, catch_failures: true)
+    context 'with a key id' do
+      let(:key_param) { 'id' }
+      let(:key_value) { MISSING_KEY_FINGERPRINT }
+
+      it 'fails with directions to use apt::keyring' do
+        apply_manifest(pp, expect_failures: true) do |r|
+          expect(r.stderr).to match(MISSING_KEY_ERROR)
+        end
+      end
     end
-    apply_manifest(pp, catch_changes: true)
-    run_shell('cat /etc/apt/sources.list.d/missing_key_test.list') do |r|
-      expect(r.stdout).to match(%r{signed-by=/etc/apt/keyrings/missing_key_test\.gpg})
+
+    context 'with a keyring key name' do
+      let(:key_param) { 'name' }
+      let(:key_value) { 'missing_key_test.gpg' }
+
+      before(:each) do
+        retry_on_error_matching do
+          apply_manifest(pp, catch_failures: true)
+        end
+        apply_manifest(pp, catch_changes: true)
+      end
+
+      it 'writes a signed-by keyring path' do
+        run_shell('cat /etc/apt/sources.list.d/missing_key_test.list') do |r|
+          expect(r.stdout).to match(%r{signed-by=/etc/apt/keyrings/missing_key_test\.gpg})
+        end
+      end
     end
   end
 end
