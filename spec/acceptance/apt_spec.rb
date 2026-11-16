@@ -31,6 +31,20 @@ everything_everything_pp = <<-MANIFEST
       }
 MANIFEST
 
+def apply_everything(manifest)
+  if apt_key_available?
+    # Apply the manifest (Retry if timeout error is received from key pool)
+    retry_on_error_matching do
+      apply_manifest(manifest, catch_failures: true)
+    end
+  else
+    # apt-key was removed in apt 3; the key id in this manifest needs it
+    apply_manifest(manifest, expect_failures: true) do |r|
+      expect(r.stderr).to match(%r{apt-key command is not available.*apt::keyring})
+    end
+  end
+end
+
 describe 'apt class' do
   context 'with test start reset' do
     it 'fixes the sources.list' do
@@ -40,17 +54,7 @@ describe 'apt class' do
 
   context 'with all the things' do
     it 'works with no errors' do
-      if apt_key_available?
-        # Apply the manifest (Retry if timeout error is received from key pool)
-        retry_on_error_matching do
-          apply_manifest(everything_everything_pp, catch_failures: true)
-        end
-      else
-        # apt-key was removed in apt 3; the key id in this manifest needs it
-        apply_manifest(everything_everything_pp, expect_failures: true) do |r|
-          expect(r.stderr).to match(%r{apt-key command is not available.*apt::keyring})
-        end
-      end
+      expect { apply_everything(everything_everything_pp) }.not_to raise_error
     end
 
     it 'stills work' do
