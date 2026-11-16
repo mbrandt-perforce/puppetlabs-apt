@@ -48,7 +48,7 @@ end
 describe 'apt class' do
   context 'with test start reset' do
     it 'fixes the sources.list' do
-      run_shell('cp /etc/apt/sources.list /tmp')
+      expect { run_shell('cp /etc/apt/sources.list /tmp') }.not_to raise_error
     end
   end
 
@@ -59,13 +59,13 @@ describe 'apt class' do
 
     it 'stills work' do
       run_shell('apt-get update')
-      run_shell('apt-get -y --allow-downgrades --allow-remove-essential --allow-change-held-packages upgrade')
+      expect { run_shell('apt-get -y --allow-downgrades --allow-remove-essential --allow-change-held-packages upgrade') }.not_to raise_error
     end
   end
 
   context 'with test end reset' do
     it 'fixes the sources.list' do
-      run_shell('cp /tmp/sources.list /etc/apt')
+      expect { run_shell('cp /tmp/sources.list /etc/apt') }.not_to raise_error
     end
   end
 end

@@ -669,11 +669,11 @@ describe 'apt_key' do
     MANIFEST
 
     it 'add an apt_key resource' do
-      apply_manifest_twice(ensure_present_pp)
+      expect { apply_manifest_twice(ensure_present_pp) }.not_to raise_error
     end
 
     it 'remove the apt_key resource' do
-      apply_manifest_twice(ensure_absent_pp)
+      expect { apply_manifest_twice(ensure_absent_pp) }.not_to raise_error
     end
   end
 
@@ -686,14 +686,14 @@ describe 'apt_key' do
         end
 
         apply_manifest(gpg_key_pp, catch_changes: true)
-        run_shell(PUPPETLABS_KEY_CHECK_COMMAND)
+        expect { run_shell(PUPPETLABS_KEY_CHECK_COMMAND) }.not_to raise_error
       end
     end
 
     context 'with multiple keys' do
       it 'runs without errors' do
         apply_manifest_twice(multiple_keys_pp)
-        run_shell(PUPPETLABS_KEY_CHECK_COMMAND)
+        expect { run_shell(PUPPETLABS_KEY_CHECK_COMMAND) }.not_to raise_error
       end
     end
 
@@ -714,7 +714,7 @@ describe 'apt_key' do
         end
 
         apply_manifest(hkp_pool_pp, catch_changes: true)
-        run_shell(PUPPETLABS_KEY_CHECK_COMMAND)
+        expect { run_shell(PUPPETLABS_KEY_CHECK_COMMAND) }.not_to raise_error
       end
     end
 
@@ -726,7 +726,7 @@ describe 'apt_key' do
           end
 
           apply_manifest(hkps_ubuntu_pp, catch_changes: true)
-          run_shell(PUPPETLABS_KEY_CHECK_COMMAND)
+          expect { run_shell(PUPPETLABS_KEY_CHECK_COMMAND) }.not_to raise_error
         end
       end
     end
@@ -752,12 +752,12 @@ describe 'apt_key' do
     context 'with http://' do
       it 'applies without error' do
         apply_manifest_twice(http_works_pp)
-        run_shell(PUPPETLABS_KEY_CHECK_COMMAND)
+        expect { run_shell(PUPPETLABS_KEY_CHECK_COMMAND) }.not_to raise_error
       end
 
       it 'works with userinfo' do
         apply_manifest_twice(http_works_userinfo_pp)
-        run_shell(PUPPETLABS_KEY_CHECK_COMMAND)
+        expect { run_shell(PUPPETLABS_KEY_CHECK_COMMAND) }.not_to raise_error
       end
 
       it 'fails with a 404' do
@@ -781,7 +781,7 @@ describe 'apt_key' do
 
       it 'applies without error' do
         apply_manifest_twice(ftp_works_pp)
-        run_shell(CENTOS_KEY_CHECK_COMMAND)
+        expect { run_shell(CENTOS_KEY_CHECK_COMMAND) }.not_to raise_error
       end
 
       it 'fails with a 550' do
@@ -800,17 +800,17 @@ describe 'apt_key' do
     context 'with https://' do
       it 'applies without error' do
         apply_manifest_twice(https_works_pp)
-        run_shell(PUPPETLABS_KEY_CHECK_COMMAND)
+        expect { run_shell(PUPPETLABS_KEY_CHECK_COMMAND) }.not_to raise_error
       end
 
       it 'works with weak ssl' do
         apply_manifest_twice(https_with_weak_ssl_works_pp)
-        run_shell(PUPPETLABS_KEY_CHECK_COMMAND)
+        expect { run_shell(PUPPETLABS_KEY_CHECK_COMMAND) }.not_to raise_error
       end
 
       it 'works with userinfo' do
         apply_manifest_twice(https_userinfo_pp)
-        run_shell(PUPPETLABS_KEY_CHECK_COMMAND)
+        expect { run_shell(PUPPETLABS_KEY_CHECK_COMMAND) }.not_to raise_error
       end
 
       it 'fails with a 404' do
@@ -838,7 +838,7 @@ describe 'apt_key' do
 
       it 'applies without error' do
         apply_manifest_twice(path_exists_pp)
-        run_shell(PUPPETLABS_KEY_CHECK_COMMAND)
+        expect { run_shell(PUPPETLABS_KEY_CHECK_COMMAND) }.not_to raise_error
       end
     end
 
@@ -871,7 +871,7 @@ describe 'apt_key' do
     context 'with debug' do
       it 'applies without error' do
         apply_manifest_twice(debug_works_pp)
-        run_shell(PUPPETLABS_KEY_CHECK_COMMAND)
+        expect { run_shell(PUPPETLABS_KEY_CHECK_COMMAND) }.not_to raise_error
       end
     end
   end
@@ -879,7 +879,7 @@ describe 'apt_key' do
   describe 'fingerprint validation against source/content' do
     context 'with fingerprint in id matches fingerprint from remote key' do
       it 'applies without error' do
-        apply_manifest_twice(fingerprint_match_pp)
+        expect { apply_manifest_twice(fingerprint_match_pp) }.not_to raise_error
       end
     end
 
@@ -907,7 +907,7 @@ describe 'apt_key' do
         retry_on_error_matching do
           apply_manifest(refresh_true_pp)
           # Check key has been updated to new version
-          run_shell(PUPPETLABS_EXP_CHECK_COMMAND.to_s)
+          expect { run_shell(PUPPETLABS_EXP_CHECK_COMMAND.to_s) }.not_to raise_error
         end
       end
     end
@@ -916,7 +916,7 @@ describe 'apt_key' do
       it 'does not replace an expired key' do
         apply_manifest(refresh_false_pp)
         # Expired key is present and has not been updated by the new version
-        run_shell(PUPPETLABS_EXP_CHECK_COMMAND.to_s, expect_failures: true)
+        expect { run_shell(PUPPETLABS_EXP_CHECK_COMMAND.to_s, expect_failures: true) }.not_to raise_error
       end
     end
   end
